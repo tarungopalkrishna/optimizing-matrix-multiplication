@@ -55,7 +55,7 @@ void matmul(int start_index, int end_index) {
 */
 }
 
-// Why, ask the C gods.
+// Why?; ask the C gods.
 // https://stackoverflow.com/questions/11253025/pthread-create-not-working-passing-argument-3-warning
 void *matmul_thread(void *n) {
     uint64_t k = (uint64_t)n;
@@ -91,7 +91,6 @@ int main() {
     for (int i = 0; i < NTHREADS; i++) {
         // Create the threads
         printf("Creating thread %d\n", i);
-
         pthread_create(&threads[i], NULL, matmul_thread, (void *)(uint64_t)i);
     }
     while (threads_ready < NTHREADS) usleep(1);  // Wait for all threads to be ready
@@ -101,15 +100,23 @@ int main() {
     matmul(0, N);
 #else
     pthread_mutex_unlock(&lock);
-    while (threads_done != NTHREADS) usleep(1);
+    while (threads_done != NTHREADS) usleep(1); // Wait for all the threads to be done
+    // Should I do this or just wait for join to happen?
+
 #endif
 
 #if NTHREADS > 1
     for (int j = 0; j < NTHREADS; j++) {
-        pthread_join(threads[j], NULL);
+        pthread_join(threads[j], NULL); // Maybe you should get the retval?
     }
 #endif
     uint32_t end = nanos();
+    printf("Total time %f\n", (float)(end-start));
     get_tflops(start, end, (char *)"Mutiplication:");
+
+#if DEBUG
+    print_matrix();
+#endif
+
     return 0;
 }
