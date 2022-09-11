@@ -1,7 +1,7 @@
 import numpy as np
 from time import perf_counter
 
-SIZE_N = 1024
+SIZE_N = 1024*2
 # SIZE_N = 1024*8 
 
 print("The size of the matrix is:", SIZE_N, "x",SIZE_N)
@@ -12,9 +12,9 @@ def with_numpy():
     start = perf_counter()
     C = A @ B
     end = perf_counter()
-    s = end-start
+    s = (end-start)
     flop = 2*SIZE_N*SIZE_N*SIZE_N
-    print(f"{flop/s * 1e-9:.2f} GFLOP/s")
+    print(f"{flop/s * 1e-9:.2f} GFLOP/s") # Is this math is correct?
 
 
 if __name__ == "__main__":
