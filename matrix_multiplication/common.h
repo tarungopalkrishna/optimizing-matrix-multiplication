@@ -29,6 +29,7 @@ __m256 *Cm = (__m256 *)C;
 float Bf[N * N] __attribute__((aligned(64)));
 __m256 *Bfm = (__m256 *)Bf;
 
+// Get the current time in nanoseconds
 uint64_t nanos() {
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -37,11 +38,11 @@ uint64_t nanos() {
 
 void get_tflops(uint64_t start, uint64_t end, char *message) {
     printf("%s", message);
-    double tflops = (2.0 * N * N * N) * 1e-12;
-    double s = (end - start) * 1e-9;
+    double gflop = (2.0 * N * N * N) * 1e-9; // This is one GFLOP
+    double time_taken = (end - start) * 1e-9;
     double elapsed_time = end - start;
     printf("%f seconds\n", elapsed_time);
-    printf("%f TFLOPS/S\n", tflops / s);
+    printf("%f GFLOPS/S\n", gflop / time_taken);
 }
 
 void init_matrix() {

@@ -27,9 +27,8 @@ void matmul(int start_index, int end_index) {
     print_matrix();
 #endif
 */
-    uint64_t start = nanos();
-
-    printf("Multiplying block %d to %d\n", start_index, end_index);
+    // uint64_t start = nanos();
+    // printf("Multiplying block %d to %d\n", start_index, end_index);
     for (int i = start_index; i < end_index; i++) {
         for (int k = 0; k < N; k++) {
             for (int j = 0; j < N; j++) {
@@ -45,7 +44,7 @@ void matmul(int start_index, int end_index) {
     //         }
     //     }
     // }
-    uint64_t end = nanos();
+    // uint64_t end = nanos();
     // get_tflops(start, end, (char *)"Mutiplication:");
 /*
 #ifdef DEBUG
@@ -77,6 +76,7 @@ void *matmul_thread(void *n) {
     matmul(start_index, end_index);
 
     threads_done++;
+    return NULL;
 }
 
 int main() {
@@ -90,7 +90,7 @@ int main() {
     pthread_t threads[NTHREADS];
     for (int i = 0; i < NTHREADS; i++) {
         // Create the threads
-        printf("Creating thread %d\n", i);
+        // printf("Creating thread %d\n", i);
         pthread_create(&threads[i], NULL, matmul_thread, (void *)(uint64_t)i);
     }
     while (threads_ready < NTHREADS) usleep(1);  // Wait for all threads to be ready
