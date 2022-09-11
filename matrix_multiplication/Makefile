@@ -30,7 +30,4 @@ clean:
 	rm -f debug_row_major_multiply_o2
 	rm -f debug_parallel_loops_o2
 	rm -f *.cachegrind.out
-	rm -f basic_multiply.cachegrind.out
-	rm -f row_major_multiply.cachegrind.out
-	rm -f row_major_multiply_o2.cachegrind.out
-	rm -f parallel_loops_o2.cachegrind.out
+	rm -f cachegrind.out.*

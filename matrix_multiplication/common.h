@@ -41,8 +41,9 @@ void get_tflops(uint64_t start, uint64_t end, char *message) {
     double gflop = (2.0 * N * N * N) * 1e-9; // This is one GFLOP
     double time_taken = (end - start) * 1e-9;
     double elapsed_time = end - start;
-    printf("%f seconds\n", elapsed_time);
+    printf("%f seconds\n", (elapsed_time * 1e-9));
     printf("%f GFLOPS/S\n", gflop / time_taken);
+    printf("%f GFLOPS/S\n", (2.0 * N * N * N) / (end - start));
 }
 
 void init_matrix() {
