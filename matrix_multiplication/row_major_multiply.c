@@ -1,6 +1,7 @@
 #include "common.h"
 
 
+// TODO: change the how the timer works, its broken
 
 void matmul(){
     #ifdef DEBUG
