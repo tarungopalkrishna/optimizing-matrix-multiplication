@@ -10,7 +10,8 @@
 #else
     #define NTHREADS 8
     #define N 2048
-    #define BLOCK_SIZE 16
+    // #define N 512
+    // #define BLOCK_SIZE 16
 #endif
 
 float a[N][N];
@@ -30,20 +31,24 @@ float Bf[N * N] __attribute__((aligned(64)));
 __m256 *Bfm = (__m256 *)Bf;
 
 // Get the current time in nanoseconds
+// This function is bugged, I'm seeing negative values with this, idk why
 uint64_t nanos() {
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-    return (uint64_t)start.tv_sec * 1000000000 + (uint64_t)start.tv_nsec;
+    return (((uint64_t)start.tv_sec * 1000000000) + (uint64_t)start.tv_nsec);
 }
 
-void get_tflops(uint64_t start, uint64_t end, char *message) {
-    printf("%s", message);
+void get_tflops(int start_time, int end_time, char *message) {
+    printf("%s\n", message);
     double gflop = (2.0 * N * N * N) * 1e-9; // This is one GFLOP
-    double time_taken = (end - start) * 1e-9;
-    double elapsed_time = end - start;
-    printf("%f seconds\n", (elapsed_time * 1e-9));
+    // double time_taken = (end_time - start_time) * 1e-9;
+    double time_taken = ((double)(end_time - start_time) / CLOCKS_PER_SEC);
+    double elapsed_time = end_time - start_time;
+    printf("start: %d, end: %d, elapsed: %f, time taken: %f\n", start_time, end_time, elapsed_time, time_taken);
+    printf("%f instructions\n", (double)(2.0 * N * N * N));
+    // printf("%f seconds\n", (elapsed_time * 1e-9));
     printf("%f GFLOPS/S\n", gflop / time_taken);
-    printf("%f GFLOPS/S\n", (2.0 * N * N * N) / (end - start));
+    // printf("%f GFLOPS/S\n", ((2.0 * N * N * N) / ((end_time - start_time) * 1e-9)));
 }
 
 void init_matrix() {

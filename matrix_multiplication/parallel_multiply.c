@@ -1,7 +1,6 @@
 // https://stackoverflow.com/questions/5582211/what-does-define-gnu-source-imply
 #define _GNU_SOURCE
 
-#include <assert.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdatomic.h>
@@ -10,7 +9,7 @@
 #include "common.h"
 
 #ifndef NTHREADS
-#define NTHREADS 8
+    #define NTHREADS 8
 #endif
 
 // #define BLOCK_SIZE 16
@@ -37,15 +36,6 @@ void matmul(int start_index, int end_index) {
         }
     }
 
-    // for(int i =0;i<N;i++){
-    //     for(int k=0;k<N;k++){
-    //         for(int j=0;j<N;j++){
-    //             c[i][j] += a[i][k] * b[k][j];
-    //         }
-    //     }
-    // }
-    // uint64_t end = nanos();
-    // get_tflops(start, end, (char *)"Mutiplication:");
 /*
 #ifdef DEBUG
     printf("Multiplied matrices:\n");
@@ -81,8 +71,12 @@ void *matmul_thread(void *n) {
 
 int main() {
     init_matrix();
+    struct timespec start, end;
 
-    uint32_t start = nanos();
+    // int start_time = nanos();
+    time_t start_time_t = time(NULL);
+
+    clock_gettime(CLOCK_REALTIME, &start);
 #if NTHREADS > 1
     threads_ready = 0;
     threads_done = 0;
@@ -90,7 +84,7 @@ int main() {
     pthread_t threads[NTHREADS];
     for (int i = 0; i < NTHREADS; i++) {
         // Create the threads
-        // printf("Creating thread %d\n", i);
+        printf("Creating thread %d\n", i);
         pthread_create(&threads[i], NULL, matmul_thread, (void *)(uint64_t)i);
     }
     while (threads_ready < NTHREADS) usleep(1);  // Wait for all threads to be ready
@@ -110,9 +104,17 @@ int main() {
         pthread_join(threads[j], NULL); // Maybe you should get the retval?
     }
 #endif
-    uint32_t end = nanos();
-    printf("Total time %f\n", (float)(end-start));
-    get_tflops(start, end, (char *)"Mutiplication:");
+    clock_gettime(CLOCK_REALTIME, &end);
+    time_t end_time_t = time(NULL);
+    double time_spent = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+    // int end_time = nanos();
+    // printf("start:%d, end:%d\n", end_time, start_time);
+    printf("start_t:%lu, end_t:%lu\n", end_time_t, start_time_t);
+    // printf("Time taken: %lu seconds\n", end_time_t - start_time_t);
+    printf("Time taken: %f seconds\n", time_spent);
+    printf("%f GFLOPS/S\n", ((2.0 * N * N * N) / ((time_spent) * 1e9)));
+    // printf("Total time %f\n", (float)(end_time-start_time));
+    // get_tflops(start_time_t, end_time_t, (char *)"Mutiplication:");
 
 #if DEBUG
     print_matrix();
