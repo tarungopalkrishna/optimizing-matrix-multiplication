@@ -38,7 +38,7 @@ void matmul(int start_index, int end_index) {
                     int acc;
                     for (int k = 0; k < N; k++) {
                         // Convert this is the acutal representation
-                        acc += a[(jj + j) * N + k] * b[(ii + i) * N + k];
+                        acc += a[(jj + j)][k] * b[(ii + i)][k];
                         // c[i][j] += a[i][k] * b[k][j];
                     }
                 }

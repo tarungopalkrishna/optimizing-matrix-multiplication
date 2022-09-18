@@ -24,5 +24,3 @@ if __name__ == "__main__":
     f.write(A.data)
     f.write(B.data)
     f.write(C.data)
-
-  print(A[0][0], B[0][0], C[0][0])
