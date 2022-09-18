@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
     // float (*a)[n][n] = malloc(sizeof *a);
 #ifndef DEBUG
     float (*b)[n] = malloc(n*n*sizeof(float));
-    float (*c)[n] = malloc(n*n*sizeof(float));/
+    float (*c)[n] = malloc(n*n*sizeof(float));
     // NULL is (void *)0
     if( a == NULL || b == NULL || c == NULL){
         printf("Memory allocation failed!\n");
