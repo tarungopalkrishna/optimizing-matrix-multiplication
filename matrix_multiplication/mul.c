@@ -62,7 +62,6 @@
  * 1. Tiling
  * 2. Cache coherence
  * 3. The fundamental thing about machine learing is matrix multiply
- * 4.
  *
  * Memory order row and column major
  * In C the 2-D array is stored in row major order and its efficient to parse

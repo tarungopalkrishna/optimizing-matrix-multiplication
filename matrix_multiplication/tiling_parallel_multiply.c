@@ -1,3 +1,5 @@
+
+// https://stackoverflow.com/questions/5582211/what-does-define-gnu-source-imply
 #define _GNU_SOURCE
 
 #include <pthread.h>
@@ -7,26 +9,14 @@
 
 #include "common.h"
 
-// Need to look at what is alignment
-// Aligned data is faster than non aligned data
-// https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#Common-Variable-Attributes
-float A[N * N] __attribute__((aligned(64)));
-float B[N * N] __attribute__((aligned(64)));
-float C[N * N] __attribute__((aligned(64)));
-float val[N * N] __attribute__((aligned(64)));
-
-__m256 *Am = (__m256 *)A;
-__m256 *Bm = (__m256 *)B;
-__m256 *Cm = (__m256 *)C;
-
-float Bf[N * N] __attribute__((aligned(64)));
-__m256 *Bfm = (__m256 *)Bf;
-
 #ifndef NTHREADS
     #define NTHREADS 8
 #endif
 
 // #define BLOCK_SIZE 16
+
+#define T_BLOCK_X 8
+#define T_BLOCK_Y 2
 
 // Global variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -34,49 +24,33 @@ atomic_int threads_done = 0;
 atomic_int threads_ready = 0;
 
 void matmul(int start_index, int end_index) {
-/*
-#ifdef DEBUG
-    printf("Initial matrices:\n");
-    print_matrix();
-#endif
-*/
+    /*
+    #ifdef DEBUG
+        printf("Initial matrices:\n");
+        print_matrix();
+    #endif
+    */
     // uint64_t start = nanos();
-    // printf("Multiplying block %d to %d\n", start_index, end_index);
-    /*
-     * SIMD
-     * http://ftp.cvut.cz/kernel/people/geoff/cell/ps3-linux-docs/CellProgrammingTutorial/BasicsOfSIMDProgramming.html
-     * SIMD has vector types where as in c we have scalar types
-     * SIMD does clipping or saturation
-     */
-    /*
-     * Function I can use for SIMD
-     * _mm256_load_ps
-     * _mm256_store_ps
-     * _mm256_add_ps
-     * _mm256_mul_ps
-     * _mm256_fmadd_ps
-     * _mm256_set1_ps
-     * _mm256_setzero_ps
-     * _mm256_cmp_ps
-     * _mm256_blendv_ps
-     * _mm256_movemask_ps
-     * _mm256_permute2f128_ps
-     * _mm256_broadbcast_ps
-     */
-    for (int i = start_index; i < end_index; i++) {
-        for (int k = 0; k < N; k++) {
-            for (int j = 0; j < N; j++) {
-
-                c[i][j] += a[i][k] * b[k][j];
+    for (int i = start_index; i < end_index; i+=T_BLOCK_X) { // This is the X tiling
+        for (int j = 0; j < N; j += T_BLOCK_Y) {
+            for (int ii = 0; ii < T_BLOCK_X; ii++) {
+                for (int jj = 0; jj < N; jj++) {
+                    int acc;
+                    for (int k = 0; k < N; k++) {
+                        // Convert this is the acutal representation
+                        acc += a[(jj + j) * N + k] * b[(ii + i) * N + k];
+                        // c[i][j] += a[i][k] * b[k][j];
+                    }
+                }
             }
         }
     }
-/*
-#ifdef DEBUG
-    printf("Multiplied matrices:\n");
-    print_matrix();
-#endif
-*/
+    /*
+    #ifdef DEBUG
+        printf("Multiplied matrices:\n");
+        print_matrix();
+    #endif
+    */
 }
 
 // Why?; ask the C gods.
@@ -106,8 +80,12 @@ void *matmul_thread(void *n) {
 
 int main() {
     init_matrix();
+    struct timespec start, end;
 
-    uint32_t start = nanos();
+    // int start_time = nanos();
+    time_t start_time_t = time(NULL);
+
+    clock_gettime(CLOCK_REALTIME, &start);
 #if NTHREADS > 1
     threads_ready = 0;
     threads_done = 0;
@@ -115,7 +93,7 @@ int main() {
     pthread_t threads[NTHREADS];
     for (int i = 0; i < NTHREADS; i++) {
         // Create the threads
-        // printf("Creating thread %d\n", i);
+        printf("Creating thread %d\n", i);
         pthread_create(&threads[i], NULL, matmul_thread, (void *)(uint64_t)i);
     }
     while (threads_ready < NTHREADS) usleep(1);  // Wait for all threads to be ready
@@ -135,9 +113,17 @@ int main() {
         pthread_join(threads[j], NULL); // Maybe you should get the retval?
     }
 #endif
-    uint32_t end = nanos();
-    printf("Total time %f\n", (float)(end-start));
-    get_tflops(start, end, (char *)"Mutiplication:");
+    clock_gettime(CLOCK_REALTIME, &end);
+    time_t end_time_t = time(NULL);
+    double time_spent = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+    // int end_time = nanos();
+    // printf("start:%d, end:%d\n", end_time, start_time);
+    printf("start_t:%lu, end_t:%lu\n", end_time_t, start_time_t);
+    // printf("Time taken: %lu seconds\n", end_time_t - start_time_t);
+    printf("Time taken: %f seconds\n", time_spent);
+    printf("%f GFLOPS/S\n", ((2.0 * N * N * N) / ((time_spent) * 1e9)));
+    // printf("Total time %f\n", (float)(end_time-start_time));
+    // get_tflops(start_time_t, end_time_t, (char *)"Mutiplication:");
 
 #if DEBUG
     print_matrix();

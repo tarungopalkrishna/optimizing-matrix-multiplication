@@ -18,17 +18,6 @@ float a[N][N];
 float b[N][N];
 float c[N][N];
 
-float A[N * N] __attribute__((aligned(64)));
-float B[N * N] __attribute__((aligned(64)));
-float C[N * N] __attribute__((aligned(64)));
-float val[N * N] __attribute__((aligned(64)));
-
-__m256 *Am = (__m256 *)A;
-__m256 *Bm = (__m256 *)B;
-__m256 *Cm = (__m256 *)C;
-
-float Bf[N * N] __attribute__((aligned(64)));
-__m256 *Bfm = (__m256 *)Bf;
 
 // Get the current time in nanoseconds
 // This function is bugged, I'm seeing negative values with this, idk why
