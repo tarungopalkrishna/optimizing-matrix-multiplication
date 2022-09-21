@@ -70,13 +70,10 @@ void *matmul_thread(void *n) {
 }
 
 int main() {
-    init_matrix();
-    struct timespec start, end;
+    load_sample_matrix();
 
-    // int start_time = nanos();
-    time_t start_time_t = time(NULL);
+    long int start = nanos();
 
-    clock_gettime(CLOCK_REALTIME, &start);
 #if NTHREADS > 1
     threads_ready = 0;
     threads_done = 0;
@@ -104,21 +101,10 @@ int main() {
         pthread_join(threads[j], NULL); // Maybe you should get the retval?
     }
 #endif
-    clock_gettime(CLOCK_REALTIME, &end);
-    time_t end_time_t = time(NULL);
-    double time_spent = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
-    // int end_time = nanos();
-    // printf("start:%d, end:%d\n", end_time, start_time);
-    printf("start_t:%lu, end_t:%lu\n", end_time_t, start_time_t);
-    // printf("Time taken: %lu seconds\n", end_time_t - start_time_t);
-    printf("Time taken: %f seconds\n", time_spent);
-    printf("%f GFLOPS/S\n", ((2.0 * N * N * N) / ((time_spent) * 1e9)));
-    // printf("Total time %f\n", (float)(end_time-start_time));
-    // get_tflops(start_time_t, end_time_t, (char *)"Mutiplication:");
+    long int end = nanos(NULL);
+    get_tflops(start, end, (char *)"Mutiplication:");
 
-#if DEBUG
-    print_matrix();
-#endif
-
+    print_matrix_n(PRINT_SIZE_N);
+    check_result();
     return 0;
 }
