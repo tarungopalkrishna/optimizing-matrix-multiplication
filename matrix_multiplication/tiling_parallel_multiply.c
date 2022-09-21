@@ -6,6 +6,7 @@
 #include <sched.h>
 #include <stdatomic.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "common.h"
 
@@ -15,8 +16,6 @@
 
 // #define BLOCK_SIZE 16
 
-#define T_BLOCK_X 8
-#define T_BLOCK_Y 2
 
 // Global variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -31,24 +30,30 @@ void matmul(int start_index, int end_index) {
     #endif
     */
     // uint64_t start = nanos();
-    for (int i = start_index; i < end_index; i+=T_BLOCK_X) { // This is the X tiling
+    for (int i = start_index; i < end_index; i += T_BLOCK_X) {  // This is the X tiling
+        printf("Multiplying I block %d to %d\n", i, i + T_BLOCK_X);
         for (int j = 0; j < N; j += T_BLOCK_Y) {
+            printf("Multiplying J block %d to %d\n", j, j + T_BLOCK_Y);
             for (int ii = 0; ii < T_BLOCK_X; ii++) {
                 for (int jj = 0; jj < N; jj++) {
-                    int acc;
+                    float acc = 0;
                     for (int k = 0; k < N; k++) {
                         // Convert this is the acutal representation
+                        // printf("a[%d][%d] = %f, b[%d][%d] = %f\n", j + jj, k, a[j + jj][k], k, i + ii, b[k][i + ii]);
+                        if( (j + jj) >= N && (i + ii) >= N) {
+                            printf("i = %d, ii = %d, j = %d, jj = %d, k = %d\n", i, ii, j, jj, k);
+                            continue;
+                        }
                         acc += a[(jj + j)][k] * b[(ii + i)][k];
                         // c[i][j] += a[i][k] * b[k][j];
                     }
+                    // printf("->c[%d][%d] = %f\n", (ii + i), (jj + j), acc);
+                    c[(ii + i)][(jj + j)] = acc;
                 }
             }
         }
-    }
-    /*
     #ifdef DEBUG
         printf("Multiplied matrices:\n");
-        print_matrix();
     #endif
     */
 }
@@ -79,6 +84,17 @@ void *matmul_thread(void *n) {
 }
 
 int main() {
+
+#ifdef DEBUG
+    printf("N = %d, NTHREADS = %d, BLOCK_SIZE = %d, T_BLOCK_X = %d, T_BLOCK_Y = %d\n", N, NTHREADS, BLOCK_SIZE, T_BLOCK_X, T_BLOCK_Y);
+#endif
+
+    assert(T_BLOCK_X <= N);
+    assert(T_BLOCK_Y <= N);
+
+    assert(N % T_BLOCK_X == 0);
+    assert(N % T_BLOCK_Y == 0);
+
     init_matrix();
     struct timespec start, end;
 

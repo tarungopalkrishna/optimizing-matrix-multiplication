@@ -7,9 +7,14 @@
     #define NTHREADS 2
     #define N 8
     #define BLOCK_SIZE 2
+    #define T_BLOCK_X 4
+    #define T_BLOCK_Y 2
 #else
     #define NTHREADS 8
     #define N 2048
+    #define PRINT_SIZE_N 8
+    #define T_BLOCK_X 8
+    #define T_BLOCK_Y 2
     // #define N 512
     // #define BLOCK_SIZE 16
 #endif
