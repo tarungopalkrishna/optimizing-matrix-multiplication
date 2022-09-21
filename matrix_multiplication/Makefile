@@ -28,10 +28,7 @@ clean:
 	rm -f row_major_multiply
 	rm -f row_major_multiply_o2
 	rm -f parallel_multiply_o2
-	rm -f debug_basic_multiply
-	rm -f debug_row_major_multiply
-	rm -f debug_row_major_multiply_o2
-	rm -f debug_parallel_multiply_o2
+	rm -f debug_*
 	rm -f *.cachegrind.out
 	rm -f cachegrind.out.*
 	rm -f matmul_matrix
