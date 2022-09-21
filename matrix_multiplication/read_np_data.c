@@ -44,11 +44,12 @@ int main(int argc, char *argv[]){
     // memset array a to value 5
     printf("Hello what is this\n");
     FILE *f = fopen(filename, "rb");
-    fread(a, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?
+    size_t read_a = fread(a, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?
     printf("Hello what is this\n");
 #ifndef DEBUG
-    fread(b, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?
-    fread(c, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?S
+    size_t read_b = fread(b, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?
+    size_t read_c = fread(c, 1, sizeof(float)*n*n, f); // Changing the second parameter has no impact on the output - WHAT?S
+    printf("Read %ld bytes from A, %ld bytes from B, %ld bytes from C\n", read_a, read_b, read_c);
 #endif
     printf("This is matrix A:\n");
     printf("The value of r is: %d and the value of n is: %d\n", r, n);

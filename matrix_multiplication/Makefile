@@ -35,3 +35,5 @@ clean:
 	rm -f debug_*
 	rm -f *.cachegrind.out
 	rm -f cachegrind.out.*
+	rm -f matmul_matrix
+	rm -f read_np_data
