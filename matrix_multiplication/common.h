@@ -14,11 +14,11 @@
     #define PRINT_SIZE_N 4
 #else
     #define NTHREADS 8
-    #define N 2048
+    #define N 4096
     #define BLOCK_SIZE 16
     #define PRINT_SIZE_N 8
-    #define T_BLOCK_X 8
-    #define T_BLOCK_Y 2
+    #define T_BLOCK_X 16
+    #define T_BLOCK_Y 16
     // #define N 512
     // #define BLOCK_SIZE 16
 #endif

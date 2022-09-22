@@ -22,6 +22,8 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 atomic_int threads_done = 0;
 atomic_int threads_ready = 0;
 
+#define T_BLOCK_Z 16
+
 void matmul(int start_index, int end_index) {
     /*
     #ifdef DEBUG
@@ -31,62 +33,58 @@ void matmul(int start_index, int end_index) {
     */
     // uint64_t start = nanos();
     for (int i = start_index; i < end_index; i += T_BLOCK_X) {  // This is the X tiling
+#ifdef DEBUG
         printf("Multiplying I block %d to %d\n", i, i + T_BLOCK_X);
+#endif
         for (int j = 0; j < N; j += T_BLOCK_Y) {
+#ifdef DEBUG
             printf("Multiplying J block %d to %d\n", j, j + T_BLOCK_Y);
-            for (int ii = 0; ii < T_BLOCK_X; ii++) {
-                for (int jj = 0; jj < N; jj++) {
-                    float acc = 0;
-                    for (int k = 0; k < N; k++) {
-                        // Convert this is the acutal representation
-                        // printf("a[%d][%d] = %f, b[%d][%d] = %f\n", j + jj, k, a[j + jj][k], k, i + ii, b[k][i + ii]);
-                        if( (j + jj) >= N && (i + ii) >= N) {
-                            printf("i = %d, ii = %d, j = %d, jj = %d, k = %d\n", i, ii, j, jj, k);
-                            continue;
+#endif
+            for (int k = 0; k < N; k += T_BLOCK_Z) {
+                for (int ii = 0; ii < T_BLOCK_X; ii++) {
+                    for (int kk = 0; kk < T_BLOCK_Z; kk++) {
+                        for (int jj = 0; jj < T_BLOCK_Y; jj++) {
+                            c[(ii + i)][(jj + j)] += a[(ii + i)][kk + k] * b[kk + k][(jj + j)];
                         }
-                        acc += a[(jj + j)][k] * b[(ii + i)][k];
-                        // c[i][j] += a[i][k] * b[k][j];
                     }
-                    printf("c[%d][%d] = %f\n", (ii + i), (jj + j), acc);
-                    c[(ii + i)][(jj + j)] = acc;
                 }
             }
         }
+        /*
+        #ifdef DEBUG
+            printf("Multiplied matrices:\n");
+            print_matrix();
+        #endif
+        */
     }
-    /*
-    #ifdef DEBUG
-        printf("Multiplied matrices:\n");
-        print_matrix();
-    #endif
-    */
 }
 
-// Why?; ask the C gods.
-// https://stackoverflow.com/questions/11253025/pthread-create-not-working-passing-argument-3-warning
-void *matmul_thread(void *n) {
-    uint64_t k = (uint64_t)n;
-    int start_index = (N / NTHREADS) * k;
-    int end_index = (N / NTHREADS) * (k + 1);
+    // Why?; ask the C gods.
+    // https://stackoverflow.com/questions/11253025/pthread-create-not-working-passing-argument-3-warning
+    void *matmul_thread(void *n) {
+        uint64_t k = (uint64_t)n;
+        int start_index = (N / NTHREADS) * k;
+        int end_index = (N / NTHREADS) * (k + 1);
 
-    // Hmmm......???
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(k, &cpuset);
-    // What mutex stuff do I need to do here?
-    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+        // Hmmm......???
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(k, &cpuset);
+        // What mutex stuff do I need to do here?
+        pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 
-    threads_ready++;
+        threads_ready++;
 
-    pthread_mutex_lock(&lock);
-    pthread_mutex_unlock(&lock);
+        pthread_mutex_lock(&lock);
+        pthread_mutex_unlock(&lock);
 
-    matmul(start_index, end_index);
+        matmul(start_index, end_index);
 
-    threads_done++;
-    return NULL;
-}
+        threads_done++;
+        return NULL;
+    }
 
-int main() {
+    int main() {
 
 #ifdef DEBUG
     printf("N = %d, NTHREADS = %d, BLOCK_SIZE = %d, T_BLOCK_X = %d, T_BLOCK_Y = %d\n", N, NTHREADS, BLOCK_SIZE, T_BLOCK_X, T_BLOCK_Y);
