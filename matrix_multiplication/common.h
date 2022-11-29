@@ -7,18 +7,18 @@
 
 #ifdef DEBUG
     #define NTHREADS 2
-    #define N 4
+    #define N 8
     #define BLOCK_SIZE 2
     #define T_BLOCK_X 4
     #define T_BLOCK_Y 2
     #define PRINT_SIZE_N 4
 #else
     #define NTHREADS 8
-    #define N 4096
-    #define BLOCK_SIZE 16
+    #define N 512
+    #define BLOCK_SIZE 8
     #define PRINT_SIZE_N 8
-    #define T_BLOCK_X 16
-    #define T_BLOCK_Y 16
+    #define T_BLOCK_X 8
+    #define T_BLOCK_Y 2
     // #define N 512
     // #define BLOCK_SIZE 16
 #endif
@@ -138,6 +138,7 @@ void load_sample_matrix() {
         printf("Error opening file\n");
         exit(0);
     }
+    printf("matrix size = %u\n", N);
     size_t read_a = fread(a, 1, sizeof(float) * N * N, fp);
     size_t read_b = fread(b, 1, sizeof(float) * N * N, fp);
     size_t read_c = fread(result, 1, sizeof(float) * N * N, fp);

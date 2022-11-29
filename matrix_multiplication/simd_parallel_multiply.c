@@ -7,14 +7,26 @@
 
 #include "common.h"
 
+// SGEMM vs DGEMM
+// This is SGEMM
+
+// Google patent??
+// https://patents.google.com/patent/WO2019055593A1/en
+
+// What is c++ intrinsics?
+// https://stackoverflow.blog/2020/07/08/improving-performance-with-simd-intrinsics-in-three-use-cases/
+
 // Need to look at what is alignment
 // Aligned data is faster than non aligned data
 // https://gcc.gnu.org/onlinedocs/gcc/Common-Variable-Attributes.html#Common-Variable-Attributes
 float A[N * N] __attribute__((aligned(64)));
 float B[N * N] __attribute__((aligned(64)));
 float C[N * N] __attribute__((aligned(64)));
-float val[N * N] __attribute__((aligned(64)));
+float fval[N * N] __attribute__((aligned(64)));
 
+
+// Is there a way to check if my CPU has 256 bit wide register?
+// __m256 is a 256 bit vector which is 8 32 bit floats
 __m256 *Am = (__m256 *)A;
 __m256 *Bm = (__m256 *)B;
 __m256 *Cm = (__m256 *)C;
@@ -26,6 +38,8 @@ __m256 *Bfm = (__m256 *)Bf;
     #define NTHREADS 8
 #endif
 
+// Is this how you calculate the block size
+// Width of the vector / size of a single preciscion float = BLOCK SIZE??
 // #define BLOCK_SIZE 16
 
 // Global variables
@@ -33,13 +47,14 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 atomic_int threads_done = 0;
 atomic_int threads_ready = 0;
 
+
 void matmul(int start_index, int end_index) {
-/*
-#ifdef DEBUG
-    printf("Initial matrices:\n");
-    print_matrix();
-#endif
-*/
+    /*
+    #ifdef DEBUG
+        printf("Initial matrices:\n");
+        print_matrix();
+    #endif
+    */
     // uint64_t start = nanos();
     // printf("Multiplying block %d to %d\n", start_index, end_index);
     /*
@@ -63,11 +78,25 @@ void matmul(int start_index, int end_index) {
      * _mm256_permute2f128_ps
      * _mm256_broadbcast_ps
      */
-    for (int i = start_index; i < end_index; i++) {
-        for (int k = 0; k < N; k++) {
-            for (int j = 0; j < N; j++) {
+    for (int y = start_index; y < end_index; y += T_BLOCK_Y) {
+        for (int x = 0; x < N; x += BLOCK_SIZE * T_BLOCK_X) {
+            __m256 acc[T_BLOCK_Y][T_BLOCK_X] = {};
+            for (int k = 0; k < N; k++) {
+                for (int iy = 0; iy < T_BLOCK_Y; iy++) {
+                    // Load A into a vector
+                    __m256 ta = _mm256_broadcast_ss(&A[(y + iy) * N + k]);
+                    for (int ix = 0; ix < T_BLOCK_X; ix++) {
+                        // Perform a FMA = Multiply then add
+                        acc[iy][ix] = _mm256_fmadd_ps(ta, Bfm[((x + ix * BLOCK_SIZE) * N + k * 8) / 8], acc[iy][ix]);
+                    }
+                }
+            }
 
-                c[i][j] += a[i][k] * b[k][j];
+            for (int iy = 0; iy < T_BLOCK_Y; iy++) {
+                for (int ix = 0; ix < T_BLOCK_X; ix++) {
+                    printf("Storing %f\n", acc[iy][ix][0]);
+                    Cm[((y + iy) * N + x + ix * BLOCK_SIZE) / 8] = acc[iy][ix];
+                }
             }
         }
     }
@@ -87,8 +116,11 @@ void *matmul_thread(void *n) {
     int end_index = (N / NTHREADS) * (k + 1);
 
     // Hmmm......???
+    // What are cpusets?
+    // https://docs.kernel.org/admin-guide/cgroup-v1/cpusets.html
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
+    // Ig this is basically assigning this thread to a cpu
     CPU_SET(k, &cpuset);
     // What mutex stuff do I need to do here?
     pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
@@ -105,7 +137,16 @@ void *matmul_thread(void *n) {
 }
 
 int main() {
-    init_matrix();
+    // init_matrix();
+    FILE *f = fopen("matmul_matrix", "rb");
+    if (f == NULL) {
+        printf("please pregenerate python /tmp/matmul file\n");
+        return -1;
+    }
+    size_t read_a = fread(A, 1, sizeof(float) * N * N, f);
+    size_t read_b = fread(B, 1, sizeof(float) * N * N, f);
+    size_t read_c = fread(fval, 1, sizeof(float) * N * N, f);
+    fclose(f);
 
     uint32_t start = nanos();
 #if NTHREADS > 1
@@ -138,6 +179,13 @@ int main() {
     uint32_t end = nanos();
     printf("Total time %f\n", (float)(end-start));
     get_tflops(start, end, (char *)"Mutiplication:");
+
+    for (int k = 0; k < N * N; k++) {
+        if (fabsf(C[k] - fval[k]) > 1e-3) {
+            printf("MISMATCH AT %d, %f != %f\n", k, C[k], fval[k]);
+            return -1;
+        }
+    }
 
 #if DEBUG
     print_matrix();
