@@ -9,3 +9,6 @@
 5. Cache coherence
 6. Compiler optimizations
 
+https://gist.github.com/nadavrot/5b35d44e8ba3dd718e595e40184d03f0
+https://github.com/flame/how-to-optimize-gemm/wiki
+https://github.com/flame/how-to-optimize-gemm
