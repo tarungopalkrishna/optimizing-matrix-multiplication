@@ -28,7 +28,7 @@ stats:
 	valgrind --tool=cachegrind --log-file=parallel_multiply_o2.cachegrind.out ./parallel_multiply_o2
 
 tabulate:
-	rm a.csv
+	rm -f a.csv
 	echo "basic_multiply" >> a.csv
 	for run in 1 2 3; do ./basic_multiply | grep -E 'GFLOPS/S|start|size' | tr '\n' ',' | awk '{print $$"\n"}' >> a.csv; done
 	echo "row_major_multiply" >> a.csv
